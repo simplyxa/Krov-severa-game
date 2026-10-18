@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кровь Севера — RPG</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#111416;color:#eee0c2;font-family:Georgia,serif}
+#game{max-width:760px;margin:auto;padding:18px}
+h1,h2{color:#e7bd70}
+h1{text-align:center;font-size:29px}
+.panel{background:#222729;border:1px solid #78603a;border-radius:10px;padding:16px;margin:14px 0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.stat{background:#303638;padding:12px;border-radius:6px}
+.bar{height:15px;background:#49302e;border-radius:8px;overflow:hidden;margin:8px 0}
+.fill{height:100%;width:100%;background:#b53b39;transition:width .2s}
+#enemybar{background:#799448}
+button{padding:12px 14px;margin:5px 4px 5px 0;border:1px solid #c9a35d;border-radius:6px;background:#765025;color:#fff1d2;font-size:15px}
+button:disabled{opacity:.4}
+.muted{color:#b8ad98}
+#log{white-space:pre-line;line-height:1.6;min-height:55px}
+</style>
+</head>
+<body>
+<div id="game">
+<h1>⚔ КРОВЬ СЕВЕРА</h1>
+<p class="muted" style="text-align:center">Север помнит каждого воина.</p>
+
+<section class="panel">
+<h2>Твой герой</h2>
+<p>Имя: Северный воин</p>
+<div class="stats">
+<div class="stat">Уровень: <b id="level">1</b></div>
+<div class="stat">Опыт: <b id="xp">0</b> / 100</div>
+<div class="stat">Золото: <b id="gold">50</b></div>
+<div class="stat">Атака: <b id="attack">12</b></div>
+</div>
+<p>❤️ Здоровье: <b id="hptext">100 / 100</b></p>
+<div class="bar"><div class="fill" id="hpbar"></div></div>
+</section>
+
+<section class="panel">
+<h2>☠ Лесной гоблин</h2>
+<p>Здоровье врага: <b id="ehp">40</b> / <span id="emax">40</span></p>
+<div class="bar"><div class="fill" id="enemybar"></div></div>
+<p id="enemyinfo" class="muted">Гоблин преграждает путь.</p>
+<button id="attackBtn">⚔ Атаковать</button>
+<button id="potionBtn">🧪 Зелье (3)</button>
+<button id="newBtn">↻ Новый бой</button>
+</section>
+
+<section class="panel">
+<h2>📜 Журнал</h2>
+<div id="log">Ты прибыл на северные земли. Победи первого врага!</div>
+</section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+let level=1,xp=0,gold=50,attack=12,hp=100,maxHp=100;
+let ehp=40,emax=40,eattack=8,potions=3,ended=false;
+
+function log(t){$("log").textContent=t}
+function render(){
+$("level").textContent=level;
+$("xp").textContent=xp;
+$("gold").textContent=gold;
+$("attack").textContent=attack;
+$("hptext").textContent=hp+" / "+maxHp;
+$("hpbar").style.width=(hp/maxHp*100)+"%";
+$("ehp").textContent=ehp;
+$("emax").textContent=emax;
+$("enemybar").style.width=(ehp/emax*100)+"%";
+$("potionBtn").textContent="🧪 Зелье ("+potions+")";
+$("attackBtn").disabled=ended||hp<=0;
+$("potionBtn").disabled=potions<=0||hp<=0||hp>=maxHp;
+$("newBtn").disabled=!ended&&hp>0;
+}
+function win(){
+ended=true;
+let reward=20+level*5;
+gold+=reward;xp+=35;
+let msg="Победа! +"+reward+" золота, +35 опыта.";
+while(xp>=100){
+xp-=100;level++;maxHp+=20;hp=maxHp;attack+=3;
+msg+="\nНовый уровень: "+level+"!";
+}
+$("enemyinfo").textContent="Гоблин побеждён!";
+log(msg);render();
+}
+$("attackBtn").onclick=function(){
+if(ended||hp<=0)return;
+let damage=Math.floor(attack*(0.8+Math.random()*0.5));
+ehp=Math.max(0,ehp-damage);
+if(ehp<=0){win();return}
+let hit=Math.floor(Math.random()*eattack)+1;
+hp=Math.max(0,hp-hit);
+$("enemyinfo").textContent="Ты нанёс "+damage+" урона.";
+if(hp<=0){ended=true;log("Ты пал в бою. Нажми «Новый бой», чтобы продолжить.")}
+else log("Ты нанёс "+damage+" урона. Гоблин ударил в ответ: "+hit+".");
+render();
+};
+$("potionBtn").onclick=function(){
+if(potions<=0||hp<=0||hp>=maxHp)return;
+let heal=Math.min(30,maxHp-hp);
+hp+=heal;potions--;
+log("Зелье восстановило "+heal+" здоровья.");
+render();
+};
+$("newBtn").onclick=function(){
+if(!ended&&hp>0)return;
+if(hp<=0)hp=Math.floor(maxHp/2);
+emax=40+(level-1)*10;ehp=emax;eattack=8+(level-1)*2;
+ended=false;$("enemyinfo").textContent="Новый гоблин вышел на бой.";
+log("Начался новый бой!");render();
+};
+render();
+})();
+</script>
+</body>
+</html>
